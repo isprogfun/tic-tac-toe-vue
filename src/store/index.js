@@ -9,13 +9,15 @@ export const mutations = {
 
     field[payload.i][payload.j] = payload.type
 
-    if (payload.type === 'x') {
-      // First item for setting a field state
+    if (payload.type === 'x' && state.undoHistory.length === 0) {
+      // We should put empty state first
       state.undoHistory.push(state.field.map(i => i.slice()))
-      // Second item for redo functionality
+    } else if (payload.type === 'o') {
+      // After that we should add states after computer turn
       state.undoHistory.push(field.map(i => i.slice()))
-      state.redoHistory = []
     }
+
+    state.redoHistory = []
 
     state.field = field
   },
@@ -26,25 +28,28 @@ export const mutations = {
   },
   undo: (state) => {
     if (state.undoHistory.length) {
-      const itemAfter = state.undoHistory.pop()
-      const itemBefore = state.undoHistory.pop()
+      // First, move state from undo to redo
+      const item = state.undoHistory.pop()
+      state.redoHistory.push(item)
 
-      // First item for setting a field state
-      state.field = itemBefore.map(i => i.slice())
-      // Then put both arrays to redo
-      state.redoHistory.push(itemBefore.map(i => i.slice()))
-      state.redoHistory.push(itemAfter.map(i => i.slice()))
+      // Then apply state and empty undoHistory if it is a last item
+      state.field = state.undoHistory[state.undoHistory.length - 1].map(i => i.slice())
+      if (state.undoHistory.length === 1) {
+        state.undoHistory = []
+      }
     }
   },
   redo: (state) => {
     if (state.redoHistory.length) {
-      const itemAfter = state.redoHistory.pop()
-      const itemBefore = state.redoHistory.pop()
+      const item = state.redoHistory.pop()
 
-      // The main difference — we are putting here a state after x was placed
-      state.field = itemAfter.map(i => i.slice())
-      state.undoHistory.push(itemBefore.map(i => i.slice()))
-      state.undoHistory.push(itemAfter.map(i => i.slice()))
+      // if undoHistory is empty we should add empty state first
+      if (state.undoHistory.length === 0) {
+        state.undoHistory.push(state.field.map(i => i.slice()))
+      }
+      // then put this item to undoHistory and apply state
+      state.undoHistory.push(item)
+      state.field = item.map(i => i.slice())
     }
   }
 }

@@ -44,7 +44,6 @@ export default {
     },
     redo () {
       this.$store.commit('redo')
-      this.$store.dispatch('computerTurn')
     }
   }
 }
